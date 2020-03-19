@@ -1,0 +1,4 @@
+{
+  "azure_personal_access_token": "SOME_ACCESS_TOKEN",
+  "azure_organization_url": "https://dev.azure.com/YOUR_ORGANIZATION_HERE"
+}
