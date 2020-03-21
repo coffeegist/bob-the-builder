@@ -12,7 +12,7 @@ sudo apt-get install python3-venv
 ## Installation
 
 ```bash
-git clone git@github.com:audrummer15/bob-the-builder.git
+git clone git@github.com:coffeegist/bob-the-builder.git
 cd bob-the-builder
 python3 -m venv venv
 . ./venv/bin/activate
