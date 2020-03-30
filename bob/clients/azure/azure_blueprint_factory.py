@@ -100,9 +100,10 @@ class AzureBlueprintFactory():
     def _select_definition_queue_time_variables(self, definition):
         azure_build_instance = AzureBuildInstance(name="Default")
 
-        for key, value in definition.additional_properties["variables"].items():
-            if "allowOverride" in value:
-                if value["allowOverride"]:
-                    azure_build_instance.add_queue_time_variable(key, value["value"])
+        if "variables" in definition.additional_properties:
+            for key, value in definition.additional_properties["variables"].items():
+                if "allowOverride" in value:
+                    if value["allowOverride"]:
+                        azure_build_instance.add_queue_time_variable(key, value["value"])
 
         return azure_build_instance
