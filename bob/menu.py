@@ -14,7 +14,10 @@ class Menu:
                         item_title = getattr(item, field)
                     print("{0} - {1}".format(index, item_title))
 
-                selection = int(input("\nChoose {} number (0 to quit): ".format(item_type)))
+                if len(items) == 1:
+                    selection = 1
+                else:
+                    selection = int(input("\nChoose {} number (0 to quit): ".format(item_type)))
                 if selection <= len(items) and selection > 0:
                     return items[selection - 1]
                 elif selection == 0:
