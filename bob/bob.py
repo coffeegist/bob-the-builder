@@ -13,9 +13,9 @@ def configure_cmd(args):
     blueprints = []
 
     while True:
-        blueprints.append(args._client.create_blueprint())
+        blueprints.extend(args._client.create_blueprints())
         args._client.save_blueprints(blueprints, args.filename)
-        if not Menu.yes_or_no("Add another job?"):
+        if not Menu.yes_or_no("\nAdd another job?"):
             break
 
 

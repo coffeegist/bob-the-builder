@@ -17,8 +17,8 @@ class AzureClient:
         self._connection = Connection(base_url=config['azure_organization_url'], creds=self._credentials)
 
 
-    def create_blueprint(self):
-        return AzureBlueprintFactory(self._connection).create_blueprint()
+    def create_blueprints(self):
+        return AzureBlueprintFactory(self._connection).create_blueprints()
 
 
     def load_blueprints(self, filename):
