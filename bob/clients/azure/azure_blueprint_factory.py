@@ -2,25 +2,31 @@ from azure.devops.credentials import BasicAuthentication
 from azure.devops.connection import Connection
 
 from menu import Menu
-from .azure_blueprint import AzureBlueprint
-from .azure_build_instance import AzureBuildInstance
+from .blueprints import *
 
 class AzureBlueprintFactory():
 
 
     def __init__(self, connection):
         self._connection = connection
+        self._BLUEPRINT_ACTION_MAP = {
+            'Build' : self.create_build_blueprint,
+            'Download' : self.create_download_blueprint
+        }
 
 
     def create_blueprint(self):
-        azure_blueprint = AzureBlueprint()
-
         project = self._select_project()
-        azure_blueprint.set_project(project.name)
-
         definition = self._select_definition(project)
-        azure_blueprint.set_definition(definition.name)
+        action = self._select_action()
 
+        return self._BLUEPRINT_ACTION_MAP[action](project, definition)
+
+
+    def create_build_blueprint(self, project, definition):
+        azure_blueprint = AzureBuild()
+        azure_blueprint.set_project(project.name)
+        azure_blueprint.set_definition(definition.name)
         azure_blueprint.add_build_instance(
             self._select_definition_queue_time_variables(definition))
 
@@ -41,6 +47,19 @@ class AzureBlueprintFactory():
             agent_specification = self._select_agent_specification(agent_queue)
 
         azure_blueprint.set_agent_specification(agent_specification)
+
+        if Menu.yes_or_no('Download build artifacts?'):
+            azure_blueprint.set_download_artifacts(True)
+        else:
+            azure_blueprint.set_download_artifacts(False)
+
+        return azure_blueprint
+
+
+    def create_download_blueprint(self, project, definition):
+        azure_blueprint = AzureDownload()
+        azure_blueprint.set_project(project.name)
+        azure_blueprint.set_definition(definition.name)
 
         return azure_blueprint
 
@@ -68,6 +87,13 @@ class AzureBlueprintFactory():
         agent_pools = task_agent_client.get_agent_pools()
         print("\n-- Agent Pools --")
         return Menu.choose_from_list(agent_pools, "Agent Pool")
+
+
+    def _select_action(self):
+        print("\n-- Actions --")
+        return Menu.choose_from_list(
+            list(self._BLUEPRINT_ACTION_MAP.keys()), "action", None
+        )
 
 
     def _select_agent_queue(self, project):
