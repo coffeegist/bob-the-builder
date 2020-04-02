@@ -33,12 +33,10 @@ For this project to function, you need to have access to an Azure DevOps account
 
 ### Creating a token
 
-Login to https://dev.azure.com
-- Go to Azure DevOps Profile
-- Under Security, Select **Personal access token**
+Login to https://dev.azure.com/YOUR_USERNAME/_usersSettings/tokens
 - Click **+ New Token**
   - Name: “Bob”
-  - Organization: “<YOUR_ORG_HERE>”
+  - Organization: "\<YOUR_ORG_HERE\>"
   - Scope: Full Access
   - Click **Create**
 
@@ -47,7 +45,8 @@ Login to https://dev.azure.com
 Once you have access, run the following command to configure a blueprint:
 
 ```bash
-python bob/bob.py --config bob/bob-config.json --azure configure -f my-build.json
+cd bob
+python bob.py configure -f my-build.json
 ```
 
 ### Queueing a build
@@ -55,7 +54,7 @@ python bob/bob.py --config bob/bob-config.json --azure configure -f my-build.jso
 Using the previously configured blueprint, `my-build.json`:
 
 ```bash
-python bob/bob.py --config bob/bob-config.json --azure run -f my-build.json -o ./build-artifacts
+python bob.py run -f my-build.json -o ./build-artifacts
 ```
 
 ## When you're finished...
