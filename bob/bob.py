@@ -1,7 +1,6 @@
 import argparse
 
 from menu import Menu
-from bob_build import BobBuild
 from clients.client_factory import ClientFactory
 
 
@@ -23,7 +22,7 @@ def run_cmd(args):
     blueprints = args._client.load_blueprints(args.filename)
 
     for blueprint in blueprints:
-        bob_builds = args._client.execute_blueprint(blueprint, args.output_directory)
+        args._client.execute_blueprint(blueprint, args.output_directory)
 
 
 def main():
@@ -34,16 +33,16 @@ def main():
     subparsers = parser.add_subparsers()
 
     # "configure"
-    configure_parser = subparsers.add_parser('configure', help="Generate a Blueprint for future jobs")
+    configure_parser = subparsers.add_parser('configure', help="Generate a blueprint for future jobs")
     configure_parser.set_defaults(dispatch=configure_cmd)
     configure_parser.add_argument('-f', '--filename', metavar='FILE',
-        required=True, help='File to write build configuration to')
+        required=True, help='File to write blueprint to')
 
     # "run"
-    run_parser = subparsers.add_parser('run', help="Queue a pre-generated Blueprint")
+    run_parser = subparsers.add_parser('run', help="Queue a pre-generated blueprint")
     run_parser.set_defaults(dispatch=run_cmd)
     run_parser.add_argument('-f', '--filename', metavar='FILE',
-        required=True, help='File to read blueprint')
+        required=True, help='File to read blueprint from')
     run_parser.add_argument('-o', '--output-directory', metavar='DIR',
         required=False, default='.', help='Directory to output artifacts to')
 

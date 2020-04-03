@@ -5,6 +5,8 @@ from .azure_blueprint import AzureBlueprint
 from .build_instance import AzureBuildInstance
 
 class AzureBuild(AzureBlueprint):
+    RESULT_SUCCESS = "succeeded"
+
     BUILD_INSTANCES_KEY = "build_instances"
     AGENT_QUEUE_KEY = "agent_queue"
     AGENT_SPECIFICATION_KEY = "agent_specification"

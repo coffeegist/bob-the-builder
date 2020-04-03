@@ -6,7 +6,6 @@ from azure.devops.credentials import BasicAuthentication
 from azure.devops.connection import Connection
 from azure.devops.v5_1.build.models import AgentSpecification, Build
 
-from bob_build import BobBuild
 from .azure_blueprint_factory import AzureBlueprintFactory
 from .blueprints import *
 
@@ -44,9 +43,7 @@ class AzureClient:
         build_client = self._connection.clients.get_build_client()
         artifacts = build_client.get_artifacts(azure_build.project.name, azure_build.id)
         for artifact in artifacts:
-            extension = self._get_extension_from_download_url(artifact.resource.download_url)
-            if extension == None:
-                extension = "zip"
+            extension = self._get_extension_from_artifact_download_url(artifact.resource.download_url)
 
             filename = "{}_{}.{}".format(artifact.name, azure_build.id, extension)
             if name is not None:
@@ -90,42 +87,59 @@ class AzureClient:
 
     def _execute_azure_build_blueprint(self, blueprint, output_directory):
         project = self.get_project_by_name(blueprint.get_project())
-        definition = self.get_definition_by_name(project.name, blueprint.get_definition())
+        definition = self.get_definition_by_name(
+            project.name, blueprint.get_definition()
+        )
 
-        print('\nStarting {} for {}->{}...\n'.format(
+        print('\nStarting {} for {}->{} ...\n'.format(
             blueprint.__class__.__name__,
             blueprint.get_project(),
             blueprint.get_definition()))
 
-        queue = self.get_agent_queue_by_name(project.name, blueprint.get_agent_queue())
+        queue = self.get_agent_queue_by_name(
+            project.name, blueprint.get_agent_queue()
+        )
         if blueprint.get_agent_specification() != None:
-            agent_specification = AgentSpecification(identifier=blueprint.get_agent_specification())
+            agent_specification = AgentSpecification(
+                identifier=blueprint.get_agent_specification()
+            )
         else:
             agent_specification = None
 
         for instance in blueprint.get_build_instances():
-            name = instance.get_name()
             parameters = json.dumps(instance.get_queue_time_variables())
             tags = instance.get_tags()
-            if name is not None:
-                print("Building instance {}...".format(name))
+            instance_name = instance.get_name()
+            if instance_name is None:
+                instance_name = "Default"
+            print("Building instance {}...".format(instance_name))
 
-            build = self._build_definition(project, definition, queue, agent_specification, blueprint.get_source_branch(), parameters, tags)
+            build = self._build_definition(
+                project, definition, queue, agent_specification,
+                blueprint.get_source_branch(), parameters, tags
+            )
 
-            bob_build = BobBuild(name=name, original_build=build)
-            if build.result == "succeeded":
+            if build.result == AzureBuild.RESULT_SUCCESS:
                 print("Build succeeded!")
-                bob_build.result = BobBuild.STATUS_SUCCESS
-                bob_build.download_urls = self._get_build_artifact_download_links(build)
 
                 if blueprint.get_download_artifacts():
-                    download_name = "{}_{}".format( blueprint.get_definition().strip().lower().replace(' ', '-'), bob_build.name)
-                    self.download_build_artifacts(bob_build.original_build, output_directory, download_name)
+                    download_name = "{}_{}".format(
+                        blueprint.get_definition(), instance_name
+                    )
+
+                    download_name = self._normalize_filename(download_name)
+
+                    self.download_build_artifacts(
+                        build, output_directory, download_name
+                    )
                 else:
                     print("Skipping download...")
             else:
-                print("Build failed!")
-                bob_build.result = BobBuild.STATUS_FAILURE
+                print("Build failed with: {}!".format(build.result))
+
+
+    def _normalize_filename(self, name):
+        return name.strip().lower().replace(' ', '-')
 
 
     def _execute_azure_download_blueprint(self, blueprint, output_directory):
@@ -159,11 +173,14 @@ class AzureClient:
                 download_name = blueprint.get_definition().strip().lower().replace(' ', '-')
                 self.download_build_artifacts(build, output_directory, download_name)
 
-    def _get_extension_from_download_url(self, url):
+
+    def _get_extension_from_artifact_download_url(self, url):
         extension = None
         format_split = url.split("format=")
         if len(format_split) > 0:
             extension = format_split[1].split("&")[0]
+        else:
+            extension = "zip"
         return extension
 
 
