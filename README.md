@@ -24,7 +24,8 @@ pip install -r requirements.txt
 Copy and edit the `bob-config.json` file to include a personal access token and organization url to the Azure DevOps account of your choosing.
 
 ```bash
-cp bob/bob-config.json.sample bob/bob-config.json
+cd bob
+cp bob-config.json.sample bob-config.json
 ```
 
 ## Running
@@ -33,29 +34,27 @@ For this project to function, you need to have access to an Azure DevOps account
 
 ### Creating a token
 
-Login to https://dev.azure.com
-- Go to Azure DevOps Profile
-- Under Security, Select **Personal access token**
+Login to https://dev.azure.com/YOUR_USERNAME/_usersSettings/tokens
 - Click **+ New Token**
   - Name: “Bob”
-  - Organization: “<YOUR_ORG_HERE>”
+  - Organization: "\<YOUR_ORG_HERE\>"
   - Scope: Full Access
   - Click **Create**
 
-### Configuring a build
+### Configuring a blueprint
 
 Once you have access, run the following command to configure a blueprint:
 
 ```bash
-python bob/bob.py --config bob/bob-config.json --azure configure -f my-build.json
+python bob.py configure -f my-blueprint.json
 ```
 
-### Queueing a build
+### Queueing a blueprint
 
-Using the previously configured blueprint, `my-build.json`:
+Feel free to modify your blueprint manually, especially if you are building a pipeline that has queue-time variables. Then, using your newly configured blueprint, `my-blueprint.json`:
 
 ```bash
-python bob/bob.py --config bob/bob-config.json --azure run -f my-build.json -o ./build-artifacts
+python bob.py run -f my-blueprint.json -o ./build-artifacts
 ```
 
 ## When you're finished...

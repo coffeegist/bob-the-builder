@@ -2,47 +2,75 @@ from azure.devops.credentials import BasicAuthentication
 from azure.devops.connection import Connection
 
 from menu import Menu
-from .azure_blueprint import AzureBlueprint
-from .azure_build_instance import AzureBuildInstance
+from .blueprints import *
 
 class AzureBlueprintFactory():
 
 
     def __init__(self, connection):
         self._connection = connection
+        self._BLUEPRINT_ACTION_MAP = {
+            'Build' : self.create_build_blueprints,
+            'Download' : self.create_download_blueprints
+        }
 
 
-    def create_blueprint(self):
-        azure_blueprint = AzureBlueprint()
-
+    def create_blueprints(self):
         project = self._select_project()
-        azure_blueprint.set_project(project.name)
+        action = self._select_action()
 
-        definition = self._select_definition(project)
-        azure_blueprint.set_definition(definition.name)
+        return self._BLUEPRINT_ACTION_MAP[action](project)
 
-        azure_blueprint.add_build_instance(
-            self._select_definition_queue_time_variables(definition))
 
-        if Menu.yes_or_no('Use default agent queue?'):
-            agent_queue = definition.queue
-        else:
-            agent_queue = self._select_agent_queue(project)
+    def create_build_blueprints(self, project):
+        blueprints = []
+        definitions = self._select_definition(project, multiple=True)
+        for definition in definitions:
+            print("\n--- Configuring {} ---".format(definition.name))
+            azure_blueprint = AzureBuild()
+            azure_blueprint.set_project(project.name)
+            azure_blueprint.set_definition(definition.name)
+            azure_blueprint.add_build_instance(
+                self._select_definition_queue_time_variables(definition))
 
-        azure_blueprint.set_agent_queue(agent_queue.name)
+            if Menu.yes_or_no('Use default agent queue?'):
+                agent_queue = definition.queue
+            else:
+                agent_queue = self._select_agent_queue(project)
 
-        if Menu.yes_or_no('Use default agent specification?'):
-            try:
-                agent_specification = (definition.additional_properties
-                    ['process']['target']['agentSpecification']['identifier'])
-            except:
-                agent_specification = None
-        else:
-            agent_specification = self._select_agent_specification(agent_queue)
+            azure_blueprint.set_agent_queue(agent_queue.name)
 
-        azure_blueprint.set_agent_specification(agent_specification)
+            if Menu.yes_or_no('Use default agent specification?'):
+                try:
+                    agent_specification = (definition.additional_properties
+                        ['process']['target']['agentSpecification']['identifier'])
+                except:
+                    agent_specification = None
+            else:
+                agent_specification = self._select_agent_specification(agent_queue)
 
-        return azure_blueprint
+            azure_blueprint.set_agent_specification(agent_specification)
+
+            if Menu.yes_or_no('Download build artifacts?'):
+                azure_blueprint.set_download_artifacts(True)
+            else:
+                azure_blueprint.set_download_artifacts(False)
+
+            blueprints.append(azure_blueprint)
+
+        return blueprints
+
+
+    def create_download_blueprints(self, project):
+        blueprints = []
+        definitions = self._select_definition(project, multiple=True)
+        for definition in definitions:
+            azure_blueprint = AzureDownload()
+            azure_blueprint.set_project(project.name)
+            azure_blueprint.set_definition(definition.name)
+            blueprints.append(azure_blueprint)
+
+        return blueprints
 
 
     def load_blueprints(self, filename):
@@ -56,11 +84,14 @@ class AzureBlueprintFactory():
         return Menu.choose_from_list(projects, "project")
 
 
-    def _select_definition(self, project):
+    def _select_definition(self, project, multiple=False):
         build_client = self._connection.clients_v5_1.get_build_client()
         definitions = build_client.get_definitions(project.name, include_all_properties=True)
         print("\n-- Definitions --")
-        return Menu.choose_from_list(definitions, "definition")
+        if multiple:
+            return Menu.choose_multiple_from_list(definitions, "definition")
+        else:
+            return Menu.choose_from_list(definitions, "definition")
 
 
     def _select_agent_pool(self, project):
@@ -68,6 +99,13 @@ class AzureBlueprintFactory():
         agent_pools = task_agent_client.get_agent_pools()
         print("\n-- Agent Pools --")
         return Menu.choose_from_list(agent_pools, "Agent Pool")
+
+
+    def _select_action(self):
+        print("\n-- Actions --")
+        return Menu.choose_from_list(
+            list(self._BLUEPRINT_ACTION_MAP.keys()), "action", None
+        )
 
 
     def _select_agent_queue(self, project):

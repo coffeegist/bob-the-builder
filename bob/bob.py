@@ -1,7 +1,6 @@
 import argparse
 
 from menu import Menu
-from bob_build import BobBuild
 from clients.client_factory import ClientFactory
 
 
@@ -13,9 +12,9 @@ def configure_cmd(args):
     blueprints = []
 
     while True:
-        blueprints.append(args._client.create_blueprint())
+        blueprints.extend(args._client.create_blueprints())
         args._client.save_blueprints(blueprints, args.filename)
-        if not Menu.yes_or_no("Add another job?"):
+        if not Menu.yes_or_no("\nAdd another job?"):
             break
 
 
@@ -23,42 +22,32 @@ def run_cmd(args):
     blueprints = args._client.load_blueprints(args.filename)
 
     for blueprint in blueprints:
-        bob_builds = args._client.build_blueprint(blueprint)
-        for build in bob_builds:
-            if build.is_build_successful():
-                args._client.download_build_artifacts(build.original_build, args.output_directory, build.name)
+        args._client.execute_blueprint(blueprint, args.output_directory)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Bob the Azure Builder')
+    parser = argparse.ArgumentParser(description='Bob the Builder')
     parser.add_argument('-c', '--config', metavar='FILE',
         required=False, default='bob-config.json', help='Bob config file location')
-
-    # service selection
-    service = parser.add_mutually_exclusive_group(required=True)
-    service.add_argument("--azure", action='store_true', help="Use Azure for your builds.")
 
     subparsers = parser.add_subparsers()
 
     # "configure"
-    configure_parser = subparsers.add_parser('configure', help="Generate a BlueprintProducer configuration file for future builds")
+    configure_parser = subparsers.add_parser('configure', help="Generate a blueprint for future jobs")
     configure_parser.set_defaults(dispatch=configure_cmd)
     configure_parser.add_argument('-f', '--filename', metavar='FILE',
-        required=True, help='File to write build configuration to')
+        required=True, help='File to write blueprint to')
 
     # "run"
-    run_parser = subparsers.add_parser('run', help="Queue a build for a pre-generated BlueprintProducer configuration")
+    run_parser = subparsers.add_parser('run', help="Queue a pre-generated blueprint")
     run_parser.set_defaults(dispatch=run_cmd)
     run_parser.add_argument('-f', '--filename', metavar='FILE',
-        required=True, help='File to read build configuration from')
+        required=True, help='File to read blueprint from')
     run_parser.add_argument('-o', '--output-directory', metavar='DIR',
-        required=False, default='.', help='Directory to output build artifacts to')
+        required=False, default='.', help='Directory to output artifacts to')
 
     args = parser.parse_args()
-
-    if args.azure:
-        args._client = get_client('Azure', args.config)
-        del args.azure
+    args._client = get_client('Azure', args.config)
 
     if 'dispatch' in args:
         cmd = args.dispatch
