@@ -91,7 +91,7 @@ class AzureClient:
             project.name, blueprint.get_definition()
         )
 
-        print('\nStarting {} for {}->{} ...\n'.format(
+        print('\nStarting {} for {}->{} ...'.format(
             blueprint.__class__.__name__,
             blueprint.get_project(),
             blueprint.get_definition()))
@@ -112,7 +112,7 @@ class AzureClient:
             instance_name = instance.get_name()
             if instance_name is None:
                 instance_name = "Default"
-            print("Building instance {}...".format(instance_name))
+            print("\nBuilding instance {}...".format(instance_name))
 
             build = self._build_definition(
                 project, definition, queue, agent_specification,
