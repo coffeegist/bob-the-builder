@@ -1,6 +1,6 @@
 # Bob the Builder
 
-Can we build it? Yes we can! Bob is a framework for automating builds for payloads in a "scriptably" configurable way.
+Can we build it? Yes we can! Bob is a framework for automating builds for payloads in a "scriptably" configurable way. Read more at [https://coffeegist.com/security/automation-through-azure-with-bob/](https://coffeegist.com/security/automation-through-azure-with-bob/).
 
 ## Dependencies
 
