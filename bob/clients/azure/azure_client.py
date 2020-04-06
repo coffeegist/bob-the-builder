@@ -123,11 +123,12 @@ class AzureClient:
                 print("Build succeeded!")
 
                 if blueprint.get_download_artifacts():
-                    download_name = "{}_{}".format(
-                        blueprint.get_definition(), instance_name
-                    )
-
-                    download_name = self._normalize_filename(download_name)
+                    download_name = self._normalize_filename(
+                        '_'.join(filter(None, [
+                            blueprint.get_definition(),
+                            instance_name,
+                            '_'.join(tags)
+                        ])))
 
                     self.download_build_artifacts(
                         build, output_directory, download_name
@@ -169,10 +170,11 @@ class AzureClient:
             print("No builds found! Skipping...")
         else:
             for build in builds:
-                download_name = '_'.join(filter(None, [
-                    blueprint.get_definition(),
-                    '_'.join(blueprint.get_tags())
-                ])).strip().lower().replace(' ', '-')
+                download_name = self._normalize_filename(
+                    '_'.join(filter(None, [
+                        blueprint.get_definition(),
+                        '_'.join(blueprint.get_tags())
+                    ])))
                 self.download_build_artifacts(build, output_directory, download_name)
 
 
