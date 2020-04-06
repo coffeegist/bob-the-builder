@@ -157,20 +157,22 @@ class AzureClient:
             'definitions': [definition.id],
             'branch_name': 'refs/heads/{}'.format(blueprint.get_source_branch()),
             'status_filter': 'completed',
-            'result_filter': 'succeeded'
+            'result_filter': 'succeeded',
+            'top': 1
         }
 
         if len(blueprint.get_tags()) > 0:
             kwargs['tag_filters'] = blueprint.get_tags();
-        else:
-            kwargs['top'] = 1
 
         builds = build_client.get_builds(**kwargs)
         if len(builds) == 0:
             print("No builds found! Skipping...")
         else:
             for build in builds:
-                download_name = blueprint.get_definition().strip().lower().replace(' ', '-')
+                download_name = '_'.join(filter(None, [
+                    blueprint.get_definition(),
+                    '_'.join(blueprint.get_tags())
+                ])).strip().lower().replace(' ', '-')
                 self.download_build_artifacts(build, output_directory, download_name)
 
 
