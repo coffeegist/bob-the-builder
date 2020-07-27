@@ -43,6 +43,9 @@ class AzureClient:
         build_client = self._connection.clients.get_build_client()
         artifacts = build_client.get_artifacts(azure_build.project.name, azure_build.id)
         for artifact in artifacts:
+            if artifact.resource.download_url is None:
+                continue 
+
             extension = self._get_extension_from_artifact_download_url(artifact.resource.download_url)
 
             filename = "{}_{}.{}".format(artifact.name, azure_build.id, extension)
